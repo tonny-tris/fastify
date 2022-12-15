@@ -1,0 +1,1552 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model bl {
+  id        Int      @id @default(autoincrement()) @db.UnsignedInt
+  stamp     DateTime @default(now()) @db.DateTime(0)
+  latitude  String   @db.VarChar(255)
+  longitude String   @db.VarChar(255)
+
+  @@map("_bl")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model user_20220628_1538 {
+  id                   Int       @default(0) @db.UnsignedInt
+  username             String    @db.VarChar(25)
+  password_hash        String    @db.VarChar(255)
+  fullname             String    @db.VarChar(255)
+  auth_key             String    @default("-") @db.VarChar(255)
+  password_reset_token String    @default("-") @db.VarChar(255)
+  status               String    @default("10") @db.VarChar(5)
+  email                String    @default("-") @db.VarChar(255)
+  role_id              String    @db.VarChar(25)
+  photo                String    @default("/_kdspanel/img/satudata/user_default.png") @db.VarChar(255)
+  pegawai_id           String?   @db.VarChar(25)
+  created_at           DateTime  @default(now()) @db.DateTime(0)
+  updated_at           DateTime? @default(now()) @db.DateTime(0)
+
+  @@map("_user_20220628_1538")
+  @@ignore
+}
+
+model x_data_app {
+  id           Int                    @id @default(autoincrement()) @db.UnsignedInt
+  code         String                 @unique(map: "unCode") @db.VarChar(25)
+  name         String                 @db.VarChar(255)
+  description  String                 @db.VarChar(255)
+  jenis_spbe   x_data_app_jenis_spbe?
+  url          String                 @db.VarChar(255)
+  position     x_data_app_position
+  vendor       String                 @default("-") @db.VarChar(255)
+  jenis        x_data_app_jenis
+  status       x_data_app_status      @default(Aktif)
+  resp_name    String                 @default("-") @db.VarChar(255)
+  resp_phone   String                 @default("-") @db.VarChar(255)
+  skpd_id      String?                @db.VarChar(25)
+  last_updated DateTime               @default(now()) @db.DateTime(0)
+  data_skpd    data_skpd?             @relation("x_data_appTodata_skpd", fields: [skpd_id], references: [code], map: "fkDAPPskpdID")
+
+  @@index([skpd_id], map: "fkAppOpdID")
+  @@map("_x_data_app")
+}
+
+model apps_menu {
+  id        Int       @id @default(autoincrement()) @db.UnsignedInt
+  apps_id   String    @db.VarChar(25)
+  menu_id   String    @db.VarChar(25)
+  data_apps data_apps @relation(fields: [apps_id], references: [apps], onDelete: Cascade, map: "fkMenAppsAppsID")
+  menu      menu      @relation(fields: [menu_id], references: [menu], onDelete: Cascade, map: "fkMenAppsMenuID")
+
+  @@index([apps_id], map: "fkMenAppsAppsID")
+  @@index([menu_id], map: "fkMenAppsMenuID")
+}
+
+model apps_module {
+  id        Int       @id @default(autoincrement()) @db.UnsignedInt
+  apps_id   String    @db.VarChar(25)
+  module_id String    @db.VarChar(25)
+  data_apps data_apps @relation(fields: [apps_id], references: [apps], onDelete: Cascade, map: "fkAppsModuleAppsID")
+  module    module    @relation(fields: [module_id], references: [module], onDelete: Cascade, map: "fkAppsModuleModuleID")
+
+  @@index([apps_id], map: "fkAppsModuleAppsID")
+  @@index([module_id], map: "fkAppsModuleModuleID")
+}
+
+model auth_assignment {
+  item_name  String    @db.VarChar(64)
+  user_id    String    @db.VarChar(64)
+  created_at Int?
+  auth_item  auth_item @relation(fields: [item_name], references: [name], onDelete: Cascade, map: "auth_assignment_ibfk_1")
+
+  @@id([item_name, user_id])
+  @@index([user_id], map: "idx-auth_assignment-user_id")
+}
+
+model auth_item {
+  name                                              String            @id @db.VarChar(64)
+  type                                              Int               @db.SmallInt
+  description                                       String?           @db.Text
+  rule_name                                         String?           @db.VarChar(64)
+  data                                              Bytes?            @db.Blob
+  created_at                                        Int?
+  updated_at                                        Int?
+  auth_rule                                         auth_rule?        @relation(fields: [rule_name], references: [name], map: "auth_item_ibfk_1")
+  auth_assignment                                   auth_assignment[]
+  auth_item_child_auth_itemToauth_item_child_child  auth_item_child[] @relation("auth_itemToauth_item_child_child")
+  auth_item_child_auth_itemToauth_item_child_parent auth_item_child[] @relation("auth_itemToauth_item_child_parent")
+
+  @@index([type], map: "idx-auth_item-type")
+  @@index([rule_name], map: "rule_name")
+}
+
+model auth_item_child {
+  parent                                      String    @db.VarChar(64)
+  child                                       String    @db.VarChar(64)
+  auth_item_auth_itemToauth_item_child_child  auth_item @relation("auth_itemToauth_item_child_child", fields: [child], references: [name], onDelete: Cascade, map: "auth_item_child_ibfk_2")
+  auth_item_auth_itemToauth_item_child_parent auth_item @relation("auth_itemToauth_item_child_parent", fields: [parent], references: [name], onDelete: Cascade, map: "auth_item_child_ibfk_1")
+
+  @@id([parent, child])
+  @@index([child], map: "child")
+}
+
+model auth_rule {
+  name       String      @id @db.VarChar(64)
+  data       Bytes?      @db.Blob
+  created_at Int?
+  updated_at Int?
+  auth_item  auth_item[]
+}
+
+model data_apps {
+  id             Int              @id @default(autoincrement()) @db.UnsignedInt
+  apps           String           @unique(map: "unApps") @db.VarChar(25)
+  nama           String           @db.VarChar(100)
+  description    String           @default("-") @db.VarChar(255)
+  gambar         String           @default("#") @db.VarChar(255)
+  baseurl        String           @default("-") @db.VarChar(100)
+  uri            String           @default("-") @db.VarChar(100)
+  loginview      String           @default("-") @db.VarChar(255)
+  sort           Int
+  is_external    Int              @default(0)
+  is_active      Int              @default(0)
+  apps_menu      apps_menu[]
+  apps_module    apps_module[]
+  module         module[]
+  role_apps      role_apps[]
+  user_access_wa user_access_wa[]
+  user_apps      user_apps[]
+}
+
+model data_fingermachine {
+  id            Int           @id @default(autoincrement())
+  skpd_id       String?       @db.VarChar(25)
+  fingermachine String        @default("-") @db.VarChar(255)
+  ip_address    String        @unique(map: "unDeviceIpAddr") @db.VarChar(25)
+  is_download   Int           @default(0)
+  total_data    Int
+  last_updated  DateTime      @db.DateTime(0)
+  last_status   String        @db.VarChar(255)
+  data_skpd     data_skpd?    @relation(fields: [skpd_id], references: [code], onDelete: Cascade, map: "fkFMSkpdID")
+  sipp_fmpull   sipp_fmpull[]
+
+  @@index([skpd_id], map: "fkFMSkpdID")
+}
+
+model data_pegawai {
+  id                      Int                       @id @default(autoincrement())
+  nip                     String                    @db.VarChar(25)
+  password                String?                   @db.Text
+  password_encoded        String                    @default("-") @db.VarChar(255)
+  nama_asn                String                    @db.VarChar(255)
+  satker_id               String?                   @default("-") @db.VarChar(25)
+  jabatan_id              String?                   @db.VarChar(25)
+  jabatan_description     String?                   @default("-") @db.VarChar(255)
+  status_id               String?                   @db.VarChar(50)
+  jobvalue_id             Int                       @default(0)
+  gol_id                  String?                   @db.VarChar(25)
+  photo                   String?                   @db.VarChar(255)
+  photo_exist             Int                       @default(2)
+  email                   String                    @default("-") @db.VarChar(100)
+  gelar_depan             String                    @default("-") @db.VarChar(25)
+  gelar_belakang          String                    @default("-") @db.VarChar(25)
+  gender_id               String?                   @db.VarChar(25)
+  agama_id                String?                   @db.VarChar(25)
+  tempat_lahir            String                    @default("-") @db.VarChar(255)
+  tanggal_lahir           DateTime                  @db.Date
+  alamat                  String?                   @default("-") @db.VarChar(255)
+  nikah_id                String?                   @db.VarChar(25)
+  jadwal_id               String?                   @default("undefined") @db.VarChar(25)
+  pangkat_id              String                    @default("#") @db.VarChar(255)
+  wanumber                String                    @default("-") @db.VarChar(25)
+  unique_device           String                    @default("#") @db.VarChar(255)
+  merk                    String                    @default("#") @db.VarChar(255)
+  android_version         String                    @default("#") @db.VarChar(255)
+  android_mode            String                    @default("#") @db.VarChar(255)
+  is_loggedin             Int                       @default(0) @db.SmallInt
+  is_operator             Int                       @default(0) @db.SmallInt
+  is_v4                   Int                       @default(2)
+  is_wapicture            Int                       @default(2)
+  is_jadwalv4             Int                       @default(2)
+  last_stamp              DateTime                  @default(now()) @db.DateTime(0)
+  last_socketid           String                    @default("-") @db.VarChar(255)
+  last_token              String                    @db.Text
+  master_pegawai_agama    master_pegawai_agama?     @relation(fields: [agama_id], references: [code], map: "fkPegawaiAgamaID")
+  master_pegawai_gender   master_pegawai_gender?    @relation(fields: [gender_id], references: [code], map: "fkPegawaiGenderID")
+  master_pegawai_golongan master_pegawai_golongan?  @relation(fields: [gol_id], references: [golongan], map: "fkPegawaiGolID")
+  master_jadwal           master_jadwal?            @relation(fields: [jadwal_id], references: [jadwal], map: "fkPegawaiJadwalID")
+  master_pegawai_nikah    master_pegawai_nikah?     @relation(fields: [nikah_id], references: [code], map: "fkPegawaiNikahID")
+  log_localdata           log_localdata[]
+  log_otp                 log_otp[]
+  log_resethp             log_resethp[]
+  master_jadwal_jam_shift master_jadwal_jam_shift[]
+  sinka_regular_masuk     sinka_regular_masuk[]
+  sinka_regular_pulang    sinka_regular_pulang[]
+  sipp_anyway             sipp_anyway[]
+  sipp_dashboard_akses    sipp_dashboard_akses[]
+  sipp_exceptspot         sipp_exceptspot[]
+  sipp_fakegps            sipp_fakegps[]
+  sipp_notification       sipp_notification[]
+  sipp_presensi           sipp_presensi[]
+  sipp_requestspot        sipp_requestspot[]
+  sipp_silenttrack        sipp_silenttrack[]
+  sipp_tracking           sipp_tracking[]
+  user_access_wa          user_access_wa[]
+
+  @@index([satker_id], map: "fkAsnSatkerId")
+  @@index([agama_id], map: "fkPegawaiAgamaID")
+  @@index([status_id], map: "fkPegawaiDataStatusID")
+  @@index([gender_id], map: "fkPegawaiGenderID")
+  @@index([gol_id], map: "fkPegawaiGolID")
+  @@index([jadwal_id], map: "fkPegawaiJadwalID")
+  @@index([nikah_id], map: "fkPegawaiNikahID")
+}
+
+model data_pegawai_sinka {
+  id                  Int      @id @default(autoincrement())
+  nip                 String   @db.VarChar(25)
+  password            String?  @db.Text
+  nama_asn            String   @db.VarChar(255)
+  satker_id           String?  @default("-") @db.VarChar(25)
+  jabatan_id          String?  @db.VarChar(25)
+  jabatan_description String?  @default("-") @db.VarChar(255)
+  status_id           String?  @db.VarChar(50)
+  jobvalue_id         Int      @default(0)
+  gol_id              String?  @db.VarChar(25)
+  photo               String?  @db.VarChar(255)
+  email               String   @default("-") @db.VarChar(100)
+  gelar_depan         String   @default("-") @db.VarChar(25)
+  gelar_belakang      String   @default("-") @db.VarChar(25)
+  gender_id           String?  @db.VarChar(25)
+  agama_id            String?  @db.VarChar(25)
+  tempat_lahir        String   @default("-") @db.VarChar(255)
+  tanggal_lahir       DateTime @db.Date
+  alamat              String?  @default("-") @db.VarChar(255)
+  nikah_id            String?  @db.VarChar(25)
+  jadwal_id           String?  @default("undefined") @db.VarChar(25)
+  pangkat_id          String   @default("#") @db.VarChar(255)
+  unique_device       String   @default("#") @db.VarChar(255)
+  merk                String   @default("#") @db.VarChar(255)
+  android_version     String   @default("#") @db.VarChar(255)
+  android_mode        String   @default("#") @db.VarChar(255)
+  is_loggedin         Int      @default(0) @db.SmallInt
+  is_operator         Int      @default(0) @db.SmallInt
+  last_stamp          DateTime @default(now()) @db.DateTime(0)
+  last_socketid       String   @default("-") @db.VarChar(255)
+  last_token          String   @db.Text
+
+  @@index([satker_id], map: "fkAsnSatkerId")
+  @@index([agama_id], map: "fkPegawaiAgamaID")
+  @@index([status_id], map: "fkPegawaiDataStatusID")
+  @@index([gender_id], map: "fkPegawaiGenderID")
+  @@index([gol_id], map: "fkPegawaiGolID")
+  @@index([jadwal_id], map: "fkPegawaiJadwalID")
+  @@index([nikah_id], map: "fkPegawaiNikahID")
+}
+
+model data_satker {
+  id                  Int                   @id @default(autoincrement()) @db.UnsignedInt
+  code                String                @unique(map: "unCode") @db.VarChar(25)
+  code_dot            String?               @unique(map: "unCodeDot") @db.VarChar(25)
+  satuan_kerja        String                @db.VarChar(255)
+  taspen_id           String?               @default("-") @db.VarChar(25)
+  skpd_id             String?               @default("#") @db.VarChar(50)
+  status              Int                   @default(1)
+  data_skpd           data_skpd?            @relation(fields: [skpd_id], references: [code], map: "fkSatkerSkpdID2")
+  master_jadwal_shift master_jadwal_shift[]
+
+  @@index([skpd_id], map: "fkSatkerSkpdID")
+}
+
+model data_skpd {
+  id                 Int                  @id @default(autoincrement()) @db.UnsignedInt
+  code               String               @unique(map: "unCode") @db.VarChar(50)
+  skpd               String               @db.VarChar(255)
+  address            String               @default("-") @db.VarChar(255)
+  phone              String               @default("-") @db.VarChar(50)
+  email              String               @default("-") @db.VarChar(50)
+  clatitude          String               @default("-") @db.VarChar(255)
+  clongitude         String               @default("-") @db.VarChar(255)
+  skpdtype_id        String?              @db.VarChar(25)
+  nama_pimpinan      String               @default("-") @db.VarChar(255)
+  photo              String               @default("#") @db.VarChar(255)
+  maps               String?              @db.LongText
+  is_active          Int                  @default(1)
+  is_sipp            Int                  @default(0)
+  is_parent          Int                  @default(0)
+  parent_code        String?              @db.VarChar(25)
+  wilayah_kode       String?              @db.VarChar(25)
+  bps_kode           String?              @db.VarChar(25)
+  data_skpd          data_skpd?           @relation("data_skpdTodata_skpd_parent_code", fields: [parent_code], references: [code], onDelete: Cascade, map: "fkSKPDParentCodeID")
+  master_skpd_type   master_skpd_type?    @relation(fields: [skpdtype_id], references: [type], map: "fkSKPDTypeID")
+  x_data_app         x_data_app[]         @relation("x_data_appTodata_skpd")
+  data_fingermachine data_fingermachine[]
+  data_satker        data_satker[]
+  other_data_skpd    data_skpd[]          @relation("data_skpdTodata_skpd_parent_code")
+  data_spot          data_spot[]
+  ikm_pelayanan_skpd ikm_pelayanan_skpd[]
+  sinobo_inovator    sinobo_inovator[]
+  sinobo_proposal    sinobo_proposal[]
+  sipp_presensi      sipp_presensi[]
+  sipp_requestspot   sipp_requestspot[]
+
+  @@index([parent_code], map: "fkSKPDParentCodeID")
+  @@index([skpdtype_id], map: "fkSKPDTypeID")
+}
+
+model data_skpd_pelayanan {
+  id                 Int                  @id @default(autoincrement()) @db.UnsignedInt
+  pelayanan          String               @unique(map: "unPelayanan") @db.VarChar(255)
+  is_active          Int                  @default(1)
+  ikm_pelayanan_skpd ikm_pelayanan_skpd[]
+}
+
+model data_spot {
+  id                   Int                    @id @default(autoincrement()) @db.UnsignedInt
+  spot_name            String                 @unique(map: "unSpotName") @db.VarChar(255)
+  latitude             String                 @db.VarChar(100)
+  longitude            String                 @db.VarChar(100)
+  latlang              String                 @db.VarChar(255)
+  max_radius           String                 @default("100") @db.VarChar(255)
+  skpd_id              String                 @default("#") @db.VarChar(50)
+  is_visible           Int                    @default(1)
+  is_active            Int                    @default(0)
+  data_skpd            data_skpd              @relation(fields: [skpd_id], references: [code], onDelete: Cascade, map: "fkSpotSkpdID")
+  sinka_regular_pulang sinka_regular_pulang[]
+  sipp_exceptspot      sipp_exceptspot[]
+
+  @@index([skpd_id], map: "fkspotlocation")
+}
+
+model ikm_pelayanan_skpd {
+  id                  Int                 @id @default(autoincrement()) @db.UnsignedInt
+  skpd_id             String              @db.VarChar(50)
+  pelayanan_id        String              @db.VarChar(255)
+  data_skpd_pelayanan data_skpd_pelayanan @relation(fields: [pelayanan_id], references: [pelayanan], onDelete: Cascade, map: "fkIKMPelPelayananID")
+  data_skpd           data_skpd           @relation(fields: [skpd_id], references: [code], onDelete: Cascade, map: "fkIKMPelSKPDid")
+
+  @@index([pelayanan_id], map: "fkIKMPelPelayananID")
+  @@index([skpd_id], map: "fkIKMPelSKPDid")
+}
+
+model info {
+  id                       Int      @id @default(autoincrement()) @db.UnsignedInt
+  app_code                 String   @db.VarChar(25)
+  app_name                 String   @db.VarChar(255)
+  app_version              String   @db.VarChar(255)
+  app_description          String   @db.VarChar(255)
+  app_url                  String   @db.VarChar(255)
+  app_releaseyear          Int      @default(2022)
+  app_logodefault          String   @db.VarChar(255)
+  app_logomini             String   @db.VarChar(255)
+  app_logomobile           String   @db.VarChar(255)
+  app_logo                 String   @default("-") @db.VarChar(255)
+  app_bglogin              String   @default("-") @db.VarChar(255)
+  app_docs                 String   @default("#") @db.VarChar(255)
+  creator_code             String   @db.VarChar(25)
+  creator_name             String   @db.VarChar(255)
+  creator_description      String   @default("-") @db.VarChar(255)
+  creator_url              String   @default("#") @db.VarChar(255)
+  creator_phone            String   @db.VarChar(255)
+  creator_logo             String   @db.VarChar(255)
+  is_dashboard_sidebarmenu Int      @default(1)
+  is_dashboard_navbarmenu  Int      @default(0)
+  is_dashboard_chat        Int      @default(0)
+  app_creator              String   @default("-") @db.VarChar(255)
+  app_creator_url          String   @default("-") @db.VarChar(255)
+  app_release_year         String   @default("2022") @db.VarChar(255)
+  app_release_date         DateTime @default(dbgenerated("'2022-04-09'")) @db.Date
+  company_code             String   @default("-") @db.VarChar(25)
+  company_name             String   @default("-") @db.VarChar(25)
+  company_logo             String   @default("-") @db.VarChar(25)
+  company_address          String   @default("-") @db.VarChar(25)
+  socket_local             String   @default("-") @db.VarChar(25)
+  socket_production        String   @default("-") @db.VarChar(25)
+}
+
+model log_activity {
+  id      Int      @id @default(autoincrement()) @db.UnsignedInt
+  user_id String   @db.VarChar(25)
+  type    String   @db.VarChar(100)
+  apps    String   @db.VarChar(100)
+  status  String   @db.VarChar(50)
+  message String   @db.VarChar(255)
+  data    String   @db.Text
+  stamp   DateTime @default(now()) @db.DateTime(0)
+
+  @@index([user_id], map: "fkLogActivityUserId")
+}
+
+model log_resethp {
+  id              Int          @id @default(autoincrement()) @db.UnsignedInt
+  pegawai_id      Int
+  unique_device   String       @db.VarChar(25)
+  merk            String       @db.VarChar(255)
+  android_version String       @db.VarChar(25)
+  android_mode    String       @db.VarChar(25)
+  stamp           DateTime     @default(now()) @db.DateTime(0)
+  user_reset      String?      @db.VarChar(25)
+  media_reset     String       @db.VarChar(25)
+  data_pegawai    data_pegawai @relation(fields: [pegawai_id], references: [id], onDelete: Cascade, map: "fkLogGantiHPPegawaiID")
+
+  @@index([pegawai_id], map: "fkLogGantiHPPegawaiID")
+}
+
+model log_temp_wa {
+  id       Int    @id @default(autoincrement()) @db.UnsignedInt
+  wanumber String @db.VarChar(25)
+  message  String @db.VarChar(255)
+}
+
+model log_wa {
+  id       Int      @id @default(autoincrement()) @db.UnsignedInt
+  wanumber String   @db.VarChar(25)
+  message  String   @db.Text
+  reply    String?  @db.Text
+  stamp    DateTime @default(now()) @db.DateTime(0)
+}
+
+model login_attempt {
+  id         Int    @id @default(autoincrement())
+  key        String @db.VarChar(255)
+  amount     Int?   @default(1)
+  reset_at   Int?
+  updated_at Int?
+  created_at Int?
+
+  @@index([amount], map: "login_attempt_amount_index")
+  @@index([key], map: "login_attempt_key_index")
+  @@index([reset_at], map: "login_attempt_reset_at_index")
+}
+
+model master_jadwal {
+  id                         Int                          @id @default(autoincrement()) @db.UnsignedInt
+  jadwal                     String                       @unique(map: "unJadwal") @db.VarChar(25)
+  description                String                       @default("-") @db.VarChar(255)
+  is_active                  Int                          @default(1)
+  data_pegawai               data_pegawai[]
+  master_jadwal_jam_nonshift master_jadwal_jam_nonshift[]
+}
+
+model master_jadwal_hari {
+  id                         Int                          @id @default(autoincrement()) @db.UnsignedInt
+  hari                       String                       @unique(map: "unHari") @db.VarChar(25)
+  is_active                  Int                          @default(1)
+  master_jadwal_jam_nonshift master_jadwal_jam_nonshift[]
+  master_jadwal_jam_shift    master_jadwal_jam_shift[]
+}
+
+model master_jadwal_jam_nonshift {
+  id                   Int                 @id @default(autoincrement()) @db.UnsignedInt
+  jadwal_id            String?             @db.VarChar(25)
+  hari_id              String?             @db.VarChar(25)
+  kode_jadwal          String              @db.VarChar(25)
+  batas_absen_masuk_1  DateTime            @db.Time(0)
+  batas_absen_masuk_2  DateTime            @db.Time(0)
+  start_hours          DateTime            @db.Time(0)
+  end_hours            DateTime            @db.Time(0)
+  batas_absen_pulang_1 DateTime            @db.Time(0)
+  batas_absen_pulang_2 DateTime            @db.Time(0)
+  is_apel              Int                 @default(0)
+  is_holiday           Int
+  stamp                DateTime            @default(now()) @db.DateTime(0)
+  master_jadwal_hari   master_jadwal_hari? @relation(fields: [hari_id], references: [hari], map: "fkJadwalJamHariID")
+  master_jadwal        master_jadwal?      @relation(fields: [jadwal_id], references: [jadwal], map: "fkJadwalJamJadwalID")
+
+  @@index([hari_id], map: "fkJadJamShiftHariID")
+  @@index([jadwal_id], map: "fkJadwalJamJadwalID")
+}
+
+model master_jadwal_jam_shift {
+  id                   Int                  @id @default(autoincrement()) @db.UnsignedInt
+  pegawai_id           Int?
+  shift_id             String?              @db.VarChar(25)
+  tanggal              DateTime             @db.Date
+  hari_id              String?              @db.VarChar(25)
+  batas_absen_masuk_1  DateTime             @db.Time(0)
+  batas_absen_masuk_2  DateTime             @db.Time(0)
+  start_hours          DateTime             @db.Time(0)
+  end_hours            DateTime             @db.Time(0)
+  batas_absen_pulang_1 DateTime             @db.Time(0)
+  batas_absen_pulang_2 DateTime             @db.Time(0)
+  is_apel              Int                  @default(0)
+  stamp                DateTime             @default(now()) @db.DateTime(0)
+  master_jadwal_hari   master_jadwal_hari?  @relation(fields: [hari_id], references: [hari], map: "fkJadJamShiftHariID")
+  data_pegawai         data_pegawai?        @relation(fields: [pegawai_id], references: [id], map: "fkJadJamShiftPegawaiID")
+  master_jadwal_shift  master_jadwal_shift? @relation(fields: [shift_id], references: [jadwalshift], map: "fkJadJamShiftJadwalID")
+
+  @@index([hari_id], map: "fkJadJamShiftHariID")
+  @@index([shift_id], map: "fkJadJamShiftJadwalID")
+  @@index([pegawai_id], map: "fkJadJamShiftPegawaiID")
+}
+
+model master_jadwal_shift {
+  id                      Int                       @id @default(autoincrement()) @db.UnsignedInt
+  jadwalshift             String                    @unique(map: "unJadwalShift") @db.VarChar(25)
+  description             String                    @db.VarChar(255)
+  iconjadwal              String                    @default("-") @db.VarChar(25)
+  batas_absen_masuk_1     DateTime                  @db.Time(0)
+  batas_absen_masuk_2     DateTime                  @db.Time(0)
+  start_hours             DateTime                  @db.Time(0)
+  end_hours               DateTime                  @db.Time(0)
+  batas_absen_pulang_1    DateTime                  @db.Time(0)
+  batas_absen_pulang_2    DateTime                  @db.Time(0)
+  apel                    Int                       @default(0)
+  is_active               Int                       @default(1)
+  satker_id               String?                   @db.VarChar(25)
+  stamp                   DateTime                  @default(now()) @db.DateTime(0)
+  data_satker             data_satker?              @relation(fields: [satker_id], references: [code], map: "fkMJSSatkeriD")
+  master_jadwal_jam_shift master_jadwal_jam_shift[]
+
+  @@index([satker_id], map: "fkMJSSatkeriD")
+}
+
+model master_pegawai_agama {
+  id            Int             @id @default(autoincrement()) @db.UnsignedInt
+  code          String          @unique(map: "unCodeAgama") @db.VarChar(25)
+  agama         String          @db.VarChar(50)
+  created_at    DateTime        @default(now()) @db.DateTime(0)
+  updated_at    DateTime        @default(now()) @db.DateTime(0)
+  data_pegawai  data_pegawai[]
+  data_penduduk data_penduduk[]
+}
+
+model master_pegawai_gender {
+  id           Int            @id @default(autoincrement()) @db.UnsignedInt
+  code         String         @unique(map: "unCodeGender") @db.VarChar(25)
+  gender       String         @db.VarChar(25)
+  created_at   DateTime       @default(now()) @db.DateTime(0)
+  updated_at   DateTime       @default(now()) @db.DateTime(0)
+  data_pegawai data_pegawai[]
+}
+
+model master_pegawai_golongan {
+  id           Int            @id @default(autoincrement()) @db.UnsignedInt
+  golongan     String         @unique(map: "unGol") @db.VarChar(25)
+  pangkat      String         @db.VarChar(255)
+  created_at   DateTime       @default(now()) @db.DateTime(0)
+  updated_at   DateTime       @default(now()) @db.DateTime(0)
+  data_pegawai data_pegawai[]
+}
+
+model master_pegawai_jabatan {
+  id         Int      @id @default(autoincrement()) @db.UnsignedInt
+  code       String   @unique(map: "unCode") @db.VarChar(25)
+  jabatan    String   @db.VarChar(255)
+  batas_usia String   @db.VarChar(10)
+  created_at DateTime @db.DateTime(0)
+  updated_at DateTime @db.DateTime(0)
+}
+
+model master_pegawai_kelasjabatan {
+  id                      Int                       @id @default(autoincrement()) @db.UnsignedInt
+  kelasjabatan            String                    @unique(map: "unKelasjabatan") @db.VarChar(25)
+  keterangan              String                    @default("-") @db.VarChar(255)
+  created_at              DateTime                  @default(now()) @db.DateTime(0)
+  updated_at              DateTime                  @default(now()) @db.DateTime(0)
+  master_sinka_jobjabatan master_sinka_jobjabatan[]
+}
+
+model master_pegawai_nikah {
+  id            Int             @id @default(autoincrement()) @db.UnsignedInt
+  code          String          @unique(map: "unCode") @db.VarChar(25)
+  nikah         String          @db.VarChar(50)
+  created_at    DateTime        @default(now()) @db.DateTime(0)
+  updated_at    DateTime        @default(now()) @db.DateTime(0)
+  data_pegawai  data_pegawai[]
+  data_penduduk data_penduduk[]
+}
+
+model master_pegawai_pangkat {
+  id            Int    @id @default(autoincrement()) @db.UnsignedInt
+  kelas_jabatan String @db.VarChar(5)
+  kategori      String @db.VarChar(2)
+  pangkat       String @db.VarChar(255)
+  jobvalue      String @default("0") @db.VarChar(25)
+}
+
+model master_pegawai_status {
+  id          Int      @id @default(autoincrement()) @db.UnsignedInt
+  code        String   @unique(map: "unCode") @db.VarChar(50)
+  description String   @db.VarChar(255)
+  created_at  DateTime @default(now()) @db.DateTime(0)
+  updated_at  DateTime @default(now()) @db.DateTime(0)
+}
+
+model master_sinka_jobjabatan {
+  id                          Int                         @id @default(autoincrement()) @db.UnsignedInt
+  kelasjabatan_id             String                      @db.VarChar(25)
+  kategori                    String                      @default("-") @db.VarChar(5)
+  jobvalue                    String                      @db.VarChar(100)
+  keterangan                  String                      @default("-") @db.VarChar(255)
+  created_at                  DateTime                    @default(now()) @db.DateTime(0)
+  updated_at                  DateTime                    @default(now()) @db.DateTime(0)
+  master_pegawai_kelasjabatan master_pegawai_kelasjabatan @relation(fields: [kelasjabatan_id], references: [kelasjabatan], onDelete: Cascade, map: "fkJJBkelasjabatanID2")
+
+  @@index([kelasjabatan_id], map: "fkJJBkelasjabatanID2")
+}
+
+model master_skpd_type {
+  id          Int         @id @default(autoincrement()) @db.UnsignedInt
+  type        String      @unique(map: "unType") @db.VarChar(25)
+  description String      @default("-") @db.VarChar(255)
+  data_skpd   data_skpd[]
+}
+
+model menu {
+  id                        Int              @id @default(autoincrement()) @db.UnsignedInt
+  versi                     Int              @default(1)
+  menu                      String           @unique(map: "menu") @db.VarChar(25)
+  description               String           @db.VarChar(255)
+  icon                      String           @db.Text
+  icon_class                String           @default("#") @db.VarChar(255)
+  url                       String           @default("#") @db.VarChar(255)
+  is_parent                 Int              @default(0)
+  is_active                 Int              @default(1)
+  is_untagged               Int              @default(0)
+  sort                      Int              @default(0)
+  parent_id                 String           @db.VarChar(25)
+  module_id                 String           @db.VarChar(25)
+  module                    module           @relation(fields: [module_id], references: [module], onDelete: Cascade, map: "fkMenuModuleID")
+  menu_menuTomenu_parent_id menu             @relation("menuTomenu_parent_id", fields: [parent_id], references: [menu], onDelete: Cascade, map: "fkMenuParentID")
+  apps_menu                 apps_menu[]
+  other_menu                menu[]           @relation("menuTomenu_parent_id")
+  role_menu                 role_menu[]
+  user_apps_menu            user_apps_menu[]
+  user_menu                 user_menu[]
+
+  @@index([module_id], map: "fkMenuModuleID")
+  @@index([parent_id], map: "fkMenuParentID")
+}
+
+model migration {
+  version    String @id @db.VarChar(180)
+  apply_time Int?
+}
+
+model module {
+  id               Int                @id @default(autoincrement()) @db.UnsignedInt
+  versi            Int                @default(1)
+  module           String             @unique(map: "unModuleId") @db.VarChar(25)
+  description      String             @db.VarChar(255)
+  icon             String             @db.Text
+  icon_class       String             @default("primary") @db.VarChar(255)
+  icon_image       String             @default("/_kdspanel/img/satudata/module_default.png") @db.VarChar(255)
+  theme            String             @default("cust-theme-1.css") @db.VarChar(255)
+  url              String             @default("#") @db.VarChar(255)
+  sort             Int                @default(0)
+  is_active        Int                @default(1)
+  is_visible       Int                @default(1)
+  apps_id          String             @default("#") @db.VarChar(25)
+  data_apps        data_apps          @relation(fields: [apps_id], references: [apps], onDelete: Cascade, map: "fkModuleAppsID")
+  apps_module      apps_module[]
+  menu             menu[]
+  role_module      role_module[]
+  user_apps_module user_apps_module[]
+  user_module      user_module[]
+  user_token       user_token[]
+
+  @@index([apps_id], map: "fkModuleAppsID")
+}
+
+model pengaduan_kategori {
+  id                   Int                    @id @default(autoincrement()) @db.UnsignedInt
+  code                 String                 @unique(map: "unCategory") @db.VarChar(25)
+  category             String                 @db.VarChar(255)
+  is_active            Int                    @default(1)
+  pengaduan_masyarakat pengaduan_masyarakat[]
+}
+
+model pengaduan_masyarakat {
+  id                 Int                 @id @default(autoincrement()) @db.UnsignedInt
+  nik                String              @db.VarChar(255)
+  title              String              @db.VarChar(100)
+  description        String              @default("-") @db.VarChar(255)
+  date               DateTime            @db.Date
+  photo              String              @db.VarChar(255)
+  category_id        String?             @db.VarChar(25)
+  status_id          String?             @default("unVerified") @db.VarChar(25)
+  stamp              DateTime            @db.DateTime(0)
+  pengaduan_kategori pengaduan_kategori? @relation(fields: [category_id], references: [code], map: "fkPMcategory")
+  pengaduan_status   pengaduan_status?   @relation(fields: [status_id], references: [code], map: "fkPMstatusID")
+
+  @@index([category_id], map: "fkPMcategory")
+  @@index([status_id], map: "fkPMstatusID")
+}
+
+model pengaduan_status {
+  id                   Int                    @id @default(autoincrement()) @db.UnsignedInt
+  code                 String                 @unique(map: "unStatus") @db.VarChar(25)
+  status               String                 @db.VarChar(25)
+  description          String                 @db.VarChar(255)
+  basecolor            String                 @default("#") @db.VarChar(25)
+  is_active            Int                    @default(1)
+  pengaduan_masyarakat pengaduan_masyarakat[]
+}
+
+model puppeter {
+  id   Int    @id @default(autoincrement()) @db.UnsignedInt
+  nama String @db.VarChar(255)
+}
+
+model role {
+  id          Int           @id @default(autoincrement()) @db.UnsignedInt
+  role        String        @unique(map: "unRole") @db.VarChar(25)
+  description String        @default("-") @db.VarChar(255)
+  role_apps   role_apps[]
+  role_menu   role_menu[]
+  role_module role_module[]
+  user        user[]
+}
+
+model role_apps {
+  id        Int       @id @default(autoincrement()) @db.UnsignedInt
+  role_id   String    @db.VarChar(25)
+  apps_id   String    @db.VarChar(25)
+  data_apps data_apps @relation(fields: [apps_id], references: [apps], onDelete: Cascade, map: "fkRolAppsAppsID")
+  role      role      @relation(fields: [role_id], references: [role], onDelete: Cascade, map: "fkRolAppsRoleID")
+
+  @@index([apps_id], map: "fkRolAppsAppsID")
+  @@index([role_id], map: "fkRolAppsRoleID")
+}
+
+model role_menu {
+  id      Int    @id @default(autoincrement()) @db.UnsignedInt
+  role_id String @db.VarChar(25)
+  menu_id String @db.VarChar(25)
+  menu    menu   @relation(fields: [menu_id], references: [menu], onDelete: Cascade, map: "fkRoleMenuMenuID")
+  role    role   @relation(fields: [role_id], references: [role], onDelete: Cascade, map: "fkRoleMenuRoleID")
+
+  @@index([menu_id], map: "fkRoleMenuMenuID")
+  @@index([role_id], map: "fkRoleMenuRoleID")
+}
+
+model role_module {
+  id        Int    @id @default(autoincrement()) @db.UnsignedInt
+  role_id   String @db.VarChar(25)
+  module_id String @db.VarChar(25)
+  module    module @relation(fields: [module_id], references: [module], onDelete: Cascade, map: "fkRoleModuleModuleID")
+  role      role   @relation(fields: [role_id], references: [role], onDelete: Cascade, map: "fkRoleModuleRoleID")
+
+  @@index([module_id], map: "fkRoleModuleModuleID")
+  @@index([role_id], map: "fkRoleModuleRoleID")
+}
+
+model route {
+  name   String @id @db.VarChar(64)
+  alias  String @db.VarChar(64)
+  type   String @db.VarChar(64)
+  status Int    @default(1) @db.SmallInt
+}
+
+model sinka_regular_masuk {
+  id           Int                       @id @default(autoincrement()) @db.UnsignedInt
+  pegawai_id   Int
+  tanggal      DateTime                  @db.Date
+  jam          String                    @db.VarChar(25)
+  spot_id      String?                   @db.VarChar(25)
+  latitude     String                    @default("-") @db.VarChar(255)
+  longitude    String                    @default("-") @db.VarChar(255)
+  media        sinka_regular_masuk_media
+  token        String                    @db.Text
+  stamp        DateTime?                 @default(now()) @db.DateTime(0)
+  data_pegawai data_pegawai              @relation(fields: [pegawai_id], references: [id], onDelete: Cascade, map: "fkSRMpegawaiID")
+
+  @@index([pegawai_id], map: "fkRegMasukPegawaiID")
+  @@index([spot_id], map: "fkRegMasukSpotID")
+}
+
+model sinka_regular_pulang {
+  id           Int                        @id @default(autoincrement()) @db.UnsignedInt
+  pegawai_id   Int
+  tanggal      DateTime                   @db.Date
+  jam          String                     @db.VarChar(25)
+  spot_id      String?                    @db.VarChar(25)
+  latitude     String                     @default("-") @db.VarChar(255)
+  longitude    String                     @default("-") @db.VarChar(255)
+  media        sinka_regular_pulang_media
+  token        String                     @db.Text
+  stamp        DateTime?                  @default(now()) @db.DateTime(0)
+  data_pegawai data_pegawai               @relation(fields: [pegawai_id], references: [id], onDelete: Cascade, map: "fkRegPulangPegawaiID2")
+  data_spot    data_spot?                 @relation(fields: [spot_id], references: [spot_name], onDelete: Cascade, map: "fkRegPulangSpotID")
+
+  @@index([pegawai_id], map: "fkRegMasukPegawaiID")
+  @@index([spot_id], map: "fkRegMasukSpotID")
+}
+
+model sinobo_inovator {
+  id        Int       @id @default(autoincrement()) @db.UnsignedInt
+  nama      String    @db.VarChar(255)
+  nohp      String    @db.VarChar(100)
+  skpd_id   String    @db.VarChar(50)
+  username  String    @unique(map: "unUsernameInovator") @db.VarChar(50)
+  password  String    @db.VarChar(100)
+  stamp     DateTime  @default(now()) @db.DateTime(0)
+  data_skpd data_skpd @relation(fields: [skpd_id], references: [code], onDelete: Cascade, map: "fkInovatorSkpdID")
+
+  @@index([skpd_id], map: "fkInovatorSkpdID")
+}
+
+model sinobo_jadwalkipp {
+  id              Int                      @id @default(autoincrement()) @db.UnsignedInt
+  tahun           Int                      @default(2022)
+  deskripsi       String                   @default("-") @db.VarChar(255)
+  status          sinobo_jadwalkipp_status @default(TERBUKA)
+  tanggal_mulai   DateTime                 @db.Date
+  tanggal_akhir   DateTime                 @db.Date
+  img_cover       String                   @default("#") @db.VarChar(255)
+  img_draft       String                   @default("#") @db.VarChar(255)
+  stamp           DateTime                 @default(now()) @db.DateTime(0)
+  created_by      String                   @db.VarChar(25)
+  user            user                     @relation(fields: [created_by], references: [username], onDelete: Cascade, map: "fkJadwalKippUsername")
+  sinobo_proposal sinobo_proposal[]
+
+  @@index([created_by], map: "fkJadwalKippUsername")
+}
+
+model sinobo_kategori {
+  id              Int               @id @default(autoincrement()) @db.UnsignedInt
+  kategori        String            @unique(map: "unKategori") @db.VarChar(50)
+  aktif           Int               @default(1)
+  sinobo_proposal sinobo_proposal[]
+}
+
+model sinobo_kelompok {
+  id              Int               @id @default(autoincrement()) @db.UnsignedInt
+  kelompok        String            @unique(map: "unKelompok") @db.VarChar(25)
+  aktif           Int               @default(1)
+  sinobo_proposal sinobo_proposal[]
+}
+
+model sinobo_pengaturan {
+  id         Int    @id @db.UnsignedInt
+  max_event  Int    @default(1)
+  max_kipp   Int    @default(3)
+  nohp_admin String @default("082313714009") @db.VarChar(25)
+  nohp_pj    String @default("-") @db.VarChar(25)
+}
+
+model sinobo_pengumuman {
+  id         Int      @id @default(autoincrement()) @db.UnsignedInt
+  judul      String   @db.VarChar(100)
+  tanggal    DateTime @db.Date
+  pengumuman String   @db.Text
+  oleh       String   @default("-") @db.VarChar(100)
+  icon       String   @db.Text
+  stamp      DateTime @default(now()) @db.DateTime(0)
+}
+
+model sinobo_proposal {
+  id                       Int               @id @default(autoincrement()) @db.UnsignedInt
+  token                    String            @default("-") @db.VarChar(25)
+  pegawai_id               Int?              @db.UnsignedInt
+  skpd_id                  String?           @db.VarChar(50)
+  judul                    String            @db.VarChar(255)
+  tanggal                  DateTime          @db.Date
+  kippkat_id               Int?              @db.UnsignedInt
+  kippkel_id               String            @db.VarChar(25)
+  eventkipp_id             Int               @default(1) @db.UnsignedInt
+  status                   Int               @default(1)
+  stamp                    DateTime          @default(now()) @db.DateTime(0)
+  p_latarbelakang_tujuan   String            @db.Text
+  p_kesesuaian             String            @db.Text
+  p_sdgs_tpb               String            @db.Text
+  p_deskripsi              String            @db.Text
+  p_inovatif               String            @db.Text
+  p_transferabilitas       String            @db.Text
+  p_sumberdaya             String            @db.Text
+  p_strategi_keberlanjutan String            @db.Text
+  p_evaluasi               String            @db.Text
+  p_evaluasi_2             String            @db.Text
+  p_evaluasi_3             String            @db.Text
+  p_keterlibatan           String            @db.Text
+  p_penentu                String            @db.Text
+  t_inspirasi              String?           @db.Text
+  t_proses                 String?           @db.Text
+  t_pembeda                String?           @db.Text
+  inovator_id              String            @map("_inovator_id") @db.VarChar(100)
+  instansi_id              String            @map("_instansi_id") @db.VarChar(255)
+  user_id                  String?           @map("_user_id") @db.VarChar(255)
+  nohp                     String            @map("_nohp") @db.VarChar(100)
+  finalist_sinobo          String            @default("-") @db.VarChar(50)
+  finalist_sinovik         String            @default("-") @db.VarChar(50)
+  finalist_kovablik        String            @default("-") @db.VarChar(50)
+  sinobo_jadwalkipp        sinobo_jadwalkipp @relation(fields: [eventkipp_id], references: [id], onDelete: Cascade, map: "fkPropsEventID")
+  sinobo_kategori          sinobo_kategori?  @relation(fields: [kippkat_id], references: [id], onDelete: Cascade, map: "fkPropsKategoriID")
+  sinobo_kelompok          sinobo_kelompok   @relation(fields: [kippkel_id], references: [kelompok], onDelete: Cascade, map: "fkPropsKelompokID")
+  data_skpd                data_skpd?        @relation(fields: [skpd_id], references: [code], onDelete: Cascade, map: "fkPropsSkpdID")
+
+  @@index([eventkipp_id], map: "fkPropsEventID")
+  @@index([kippkat_id], map: "fkPropsKategoriID")
+  @@index([kippkel_id], map: "fkPropsKelompokID")
+  @@index([pegawai_id], map: "fkPropsPegID")
+  @@index([skpd_id], map: "fkPropsSkpdID")
+}
+
+model sinobo_whatsapp {
+  id      Int      @id @default(autoincrement()) @db.UnsignedInt
+  nohp    String   @db.VarChar(25)
+  tanggal DateTime @db.Date
+}
+
+model sipp_anyway {
+  id           Int          @id @default(autoincrement()) @db.UnsignedInt
+  pegawai_id   Int
+  any_faces    Int          @default(1) @db.SmallInt
+  any_wheres   Int          @default(1) @db.SmallInt
+  data_pegawai data_pegawai @relation(fields: [pegawai_id], references: [id], onDelete: Cascade, map: "fkAnywayPegawaiID")
+
+  @@index([pegawai_id], map: "fkAnywayPegawaiID")
+}
+
+model sipp_config {
+  id           Int    @id @default(autoincrement()) @db.UnsignedInt
+  barcode_mode String @default("Off") @db.VarChar(25)
+  smile_mode   String @default("Off") @db.VarChar(25)
+  blink_mode   String @default("On") @db.VarChar(25)
+}
+
+model sipp_dashboard {
+  id                   Int                    @id @default(autoincrement()) @db.UnsignedInt
+  akses                String                 @unique(map: "unDashboardAkses") @db.VarChar(25)
+  description          String                 @db.VarChar(255)
+  partial              String                 @db.VarChar(100)
+  icon                 String                 @default("-") @db.VarChar(100)
+  sipp_dashboard_akses sipp_dashboard_akses[]
+}
+
+model sipp_dashboard_akses {
+  id             Int            @id @default(autoincrement()) @db.UnsignedInt
+  pegawai_id     Int
+  akses_id       String         @db.VarChar(25)
+  sipp_dashboard sipp_dashboard @relation(fields: [akses_id], references: [akses], onDelete: Cascade, map: "fkDAAksesID")
+  data_pegawai   data_pegawai   @relation(fields: [pegawai_id], references: [id], onDelete: Cascade, map: "fkDAPegawaiID")
+
+  @@index([akses_id], map: "fkDAAksesID")
+  @@index([pegawai_id], map: "fkDAPegawaiID")
+}
+
+model sipp_dashboard_pp94 {
+  id        Int                       @id @default(autoincrement()) @db.UnsignedInt
+  min_absen Int
+  max_absen Int
+  punished  String                    @db.VarChar(255)
+  jenis     sipp_dashboard_pp94_jenis @default(RINGAN)
+}
+
+model sipp_dashboard_rekap {
+  id             Int    @id @default(autoincrement()) @db.UnsignedInt
+  pegawai_id     Int    @db.UnsignedInt
+  tahun          Int
+  bulan          String @db.VarChar(2)
+  kehadiran      Int    @default(0)
+  ketidakhadiran Int    @default(0)
+  ketepatan      Int    @default(0)
+  keterlambatan  Int    @default(0)
+  android        Int    @default(0)
+  mesin          Int    @default(0)
+}
+
+model sipp_exceptmedium {
+  id    Int                     @id @default(autoincrement()) @db.UnsignedInt
+  merk  String                  @db.VarChar(25)
+  level sipp_exceptmedium_level @default(medium)
+}
+
+model sipp_exceptspot {
+  id           Int                    @id @default(autoincrement()) @db.UnsignedInt
+  pegawai_id   Int
+  spot_id      String                 @db.VarChar(255)
+  status       sipp_exceptspot_status
+  data_pegawai data_pegawai           @relation(fields: [pegawai_id], references: [id], onDelete: Cascade, map: "fkExcepSpotPegawaiID")
+  data_spot    data_spot              @relation(fields: [spot_id], references: [spot_name], onDelete: Cascade, map: "fkExcepSpotSpotID")
+
+  @@index([pegawai_id], map: "fkExcepSpotPegawaiID")
+  @@index([spot_id], map: "fkExcepSpotSpotID")
+}
+
+model sipp_fakegps {
+  id           Int          @id @default(autoincrement())
+  pegawai_id   Int
+  latitude     String       @default("-") @db.VarChar(255)
+  longitude    String       @default("-") @db.VarChar(255)
+  detect_date  DateTime     @db.Date
+  stamp        DateTime     @default(now()) @db.DateTime(0)
+  data_pegawai data_pegawai @relation(fields: [pegawai_id], references: [id], onDelete: Cascade, map: "fkFakePegawaiID")
+
+  @@index([pegawai_id], map: "fkFakePegawaiID")
+}
+
+model sipp_fmpull {
+  id                 Int                @id @default(autoincrement()) @db.UnsignedInt
+  token              String             @db.VarChar(255)
+  fingermachine_id   String             @db.VarChar(25)
+  status             String             @db.VarChar(255)
+  comments           String?            @db.Text
+  timeexc            Int
+  machine_data       Int                @default(0)
+  new_data           Int?               @default(0)
+  sinka_masuk        Int                @default(0)
+  sinka_pulang       Int?               @default(0)
+  via                String             @db.VarChar(255)
+  stamp              DateTime           @default(now()) @db.DateTime(0)
+  user_id            String             @default("root") @db.VarChar(255)
+  data_fingermachine data_fingermachine @relation(fields: [fingermachine_id], references: [ip_address], onDelete: Cascade, map: "fkFingermachineID")
+
+  @@index([fingermachine_id], map: "fkFingermachineID")
+}
+
+model sipp_livemessage {
+  id        Int    @id @default(autoincrement()) @db.UnsignedInt
+  message   String @db.Text
+  is_active Int    @default(0)
+}
+
+model sipp_livepopup {
+  id        Int      @id @default(autoincrement()) @db.UnsignedInt
+  token     String   @db.VarChar(255)
+  is_active Int      @default(0)
+  url       String   @default("#") @db.VarChar(255)
+  stamp     DateTime @default(now()) @db.DateTime(0)
+}
+
+model sipp_monev {
+  id         Int @id @default(autoincrement()) @db.UnsignedInt
+  pegawai_id Int
+}
+
+model sipp_notification {
+  id           Int          @id @default(autoincrement()) @db.UnsignedInt
+  token        String       @db.Text
+  message      String       @db.Text
+  font_color   String       @default("Colors.Indigo[600]") @db.VarChar(255)
+  bg_color     String       @default("Colors.White") @db.VarChar(255)
+  from_name    String       @db.VarChar(255)
+  from_photo   String       @db.VarChar(255)
+  stamp        DateTime     @default(now()) @db.DateTime(0)
+  pegawai_id   Int
+  is_received  Int          @default(0)
+  data_pegawai data_pegawai @relation(fields: [pegawai_id], references: [id], onDelete: Cascade, map: "fkReceiverPegawaiID")
+
+  @@index([pegawai_id], map: "fkAsnId")
+}
+
+model sipp_presensi {
+  id              Int                @id @default(autoincrement()) @db.UnsignedInt
+  pegawai_id      Int
+  absen_tanggal   DateTime           @db.Date
+  absen_jam       DateTime           @db.Time(0)
+  skpd_id         String?            @db.VarChar(50)
+  absen_location  String             @default("-") @db.VarChar(255)
+  absen_latitude  String?            @default("-") @db.VarChar(255)
+  absen_longitude String?            @default("-") @db.VarChar(255)
+  type            sipp_presensi_type
+  jenis           String             @default("-") @db.VarChar(255)
+  token           String?            @db.Text
+  dl_is           Int                @default(0)
+  dl_photo        String?            @db.VarChar(255)
+  dl_verified     Int                @default(0)
+  stamp           DateTime           @default(now()) @db.DateTime(0)
+  data_pegawai    data_pegawai       @relation(fields: [pegawai_id], references: [id], onDelete: Cascade, map: "fkPresensiPegawaiID")
+  data_skpd       data_skpd?         @relation(fields: [skpd_id], references: [code], onDelete: Cascade, map: "fkPresensiSkpdID")
+
+  @@index([skpd_id], map: "fkAbsensiSpotName")
+  @@index([pegawai_id], map: "fkPresensiPegawaiID")
+}
+
+model sipp_requestspot {
+  id           Int          @id @default(autoincrement()) @db.UnsignedInt
+  pegawai_id   Int
+  nama_spot    String       @db.VarChar(255)
+  latitude     String       @db.VarChar(255)
+  longitude    String       @db.VarChar(255)
+  max_radius   String       @db.VarChar(255)
+  verified     Int          @default(0)
+  stamp        DateTime     @default(now()) @db.DateTime(0)
+  skpd_id      String       @default("#") @db.VarChar(50)
+  data_pegawai data_pegawai @relation(fields: [pegawai_id], references: [id], onDelete: Cascade, map: "fkRequestSpotPegawaiID")
+  data_skpd    data_skpd    @relation(fields: [skpd_id], references: [code], onDelete: Cascade, map: "fkRequestSkpdID")
+
+  @@index([pegawai_id], map: "fkRequestSpotPegawaiID")
+  @@index([skpd_id], map: "fkSpotReqLokerId")
+}
+
+model sipp_silenttrack {
+  id           Int          @id @default(autoincrement())
+  pegawai_id   Int
+  latitude     String       @db.VarChar(255)
+  longitude    String       @db.VarChar(255)
+  stamp        String       @db.VarChar(255)
+  data_pegawai data_pegawai @relation(fields: [pegawai_id], references: [id], onDelete: Cascade, map: "fkSTrPegawaiID")
+
+  @@index([pegawai_id], map: "fkTrackingPegawaiID")
+}
+
+model sipp_tracking {
+  id           Int          @id @default(autoincrement())
+  pegawai_id   Int
+  latitude     String       @db.VarChar(255)
+  longitude    String       @db.VarChar(255)
+  tanggal      DateTime     @db.Date
+  jam          DateTime     @db.Time(0)
+  stamp        String       @db.VarChar(255)
+  data_pegawai data_pegawai @relation(fields: [pegawai_id], references: [id], onDelete: Cascade, map: "fkTrackingPegawaiID")
+
+  @@index([pegawai_id], map: "fkTrackingPegawaiID")
+}
+
+model user {
+  id                   Int                 @id @default(autoincrement()) @db.UnsignedInt
+  username             String              @unique(map: "unUsername") @db.VarChar(25)
+  password_hash        String              @db.VarChar(255)
+  fullname             String              @db.VarChar(255)
+  auth_key             String              @default("-") @db.VarChar(255)
+  password_reset_token String              @default("-") @db.VarChar(255)
+  status               String              @default("10") @db.VarChar(5)
+  email                String              @default("-") @db.VarChar(255)
+  role_id              String              @db.VarChar(25)
+  photo                String              @default("https://satudata.bondowosokab.go.id/v2/dist/assets/media/stock/600x600/user_default.png") @db.VarChar(255)
+  pegawai_id           String?             @db.VarChar(25)
+  created_at           DateTime            @default(now()) @db.DateTime(0)
+  updated_at           DateTime?           @default(now()) @db.DateTime(0)
+  role                 role                @relation(fields: [role_id], references: [role], onDelete: Cascade, map: "fkUserRoleIdn")
+  sinobo_jadwalkipp    sinobo_jadwalkipp[]
+  user_apps            user_apps[]
+  user_bukutamu        user_bukutamu[]
+  user_menu            user_menu[]
+  user_module          user_module[]
+
+  @@index([pegawai_id], map: "fkUserPegawaiID")
+  @@index([role_id], map: "fkUserRoleIdn")
+}
+
+model user_access_wa {
+  id           Int           @id @default(autoincrement()) @db.UnsignedInt
+  apps_id      String?       @db.VarChar(25)
+  pegawai_id   Int?
+  data_apps    data_apps?    @relation(fields: [apps_id], references: [apps], map: "fkUserAccessWaAppsID")
+  data_pegawai data_pegawai? @relation(fields: [pegawai_id], references: [id], map: "fkUserAccessWaPegawaiID")
+
+  @@index([apps_id], map: "fkUserAccessWaAppsID")
+  @@index([pegawai_id], map: "fkUserAccessWaPegawaiID")
+}
+
+model user_apps {
+  id                    Int                     @id @default(autoincrement()) @db.UnsignedInt
+  user_id               String                  @db.VarChar(25)
+  apps_id               String                  @db.VarChar(25)
+  data_apps             data_apps               @relation(fields: [apps_id], references: [apps], onDelete: Cascade, map: "fkUAppsAppsID2")
+  user                  user                    @relation(fields: [user_id], references: [username], onDelete: Cascade, map: "fkUAppsUserID2")
+  user_apps_credentials user_apps_credentials[]
+  user_apps_menu        user_apps_menu[]
+  user_apps_module      user_apps_module[]
+
+  @@index([apps_id], map: "fkUAppsAppsID2")
+  @@index([user_id], map: "fkUAppsUserID2")
+}
+
+model user_apps_credentials {
+  id          Int       @id @default(autoincrement()) @db.UnsignedInt
+  userapps_id Int       @db.UnsignedInt
+  username    String    @db.VarChar(50)
+  password    String    @db.VarChar(50)
+  srctoken    String    @default("-") @db.VarChar(255)
+  validtoken  String    @default("-") @db.VarChar(25)
+  user_apps   user_apps @relation(fields: [userapps_id], references: [id], onDelete: Cascade, map: "fkUAppsCreditUserAppsID")
+
+  @@index([userapps_id], map: "fkUAppsCreditUserAppsID")
+}
+
+model user_apps_menu {
+  id          Int       @id @default(autoincrement()) @db.UnsignedInt
+  userapps_id Int       @db.UnsignedInt
+  menu_id     String    @db.VarChar(25)
+  menu        menu      @relation(fields: [menu_id], references: [menu], onDelete: Cascade, map: "fkUserAppsMenuMenuID")
+  user_apps   user_apps @relation(fields: [userapps_id], references: [id], onDelete: Cascade, map: "fkUserAppsMenuUserID")
+
+  @@index([menu_id], map: "fkUserAppsMenuMenuID")
+  @@index([userapps_id], map: "fkUserAppsMenuUserID")
+}
+
+model user_apps_module {
+  id          Int       @id @default(autoincrement()) @db.UnsignedInt
+  userapps_id Int       @db.UnsignedInt
+  module_id   String    @db.VarChar(25)
+  module      module    @relation(fields: [module_id], references: [module], onDelete: Cascade, map: "fkUserAppsModModuleID")
+  user_apps   user_apps @relation(fields: [userapps_id], references: [id], onDelete: Cascade, map: "fkUserAppsModUserID")
+
+  @@index([module_id], map: "fkUserAppsModModuleID")
+  @@index([userapps_id], map: "fkUserAppsModUserID")
+}
+
+model user_bukutamu {
+  id        Int    @id @default(autoincrement()) @db.UnsignedInt
+  user_id   String @db.VarChar(25)
+  access_id String @db.VarChar(25)
+  user      user   @relation(fields: [user_id], references: [username], onDelete: Cascade, map: "fkBTOpPegawaiID")
+
+  @@index([user_id], map: "fkBTOpPegawaiID")
+}
+
+model user_masyarakat {
+  id            Int      @id @default(autoincrement()) @db.UnsignedInt
+  nik_id        String?  @db.VarChar(25)
+  password      String   @db.VarChar(255)
+  name          String   @db.VarChar(255)
+  address       String   @default("-") @db.VarChar(255)
+  phone         String   @db.VarChar(50)
+  unique_device String   @default("-") @db.VarChar(255)
+  latitude      String   @db.VarChar(255)
+  longitude     String   @db.VarChar(255)
+  is_logged_in  Int      @default(0)
+  last_token    String   @db.Text
+  last_login    DateTime @default(now()) @db.DateTime(0)
+
+  @@index([nik_id], map: "fkUMASnikID")
+}
+
+model user_menu {
+  id      Int    @id @default(autoincrement()) @db.UnsignedInt
+  user_id String @db.VarChar(25)
+  menu_id String @db.VarChar(25)
+  n_visit Int    @default(0)
+  menu    menu   @relation(fields: [menu_id], references: [menu], onDelete: Cascade, map: "fkUserMenuMenuID")
+  user    user   @relation(fields: [user_id], references: [username], onDelete: Cascade, map: "fkUserMenuUserID")
+
+  @@index([menu_id], map: "fkUserMenuMenuID")
+  @@index([user_id], map: "fkUserMenuUserID")
+}
+
+model user_module {
+  id        Int    @id @default(autoincrement()) @db.UnsignedInt
+  user_id   String @db.VarChar(25)
+  module_id String @db.VarChar(25)
+  n_visit   Int    @default(0)
+  module    module @relation(fields: [module_id], references: [module], onDelete: Cascade, map: "fkUserModuleModID")
+  user      user   @relation(fields: [user_id], references: [username], onDelete: Cascade, map: "fkUserModuleUserID")
+
+  @@index([module_id], map: "fkUserModuleModID")
+  @@index([user_id], map: "fkUserModuleUserID")
+}
+
+model user_token {
+  id        Int    @id @default(autoincrement()) @db.UnsignedInt
+  module_id String @db.VarChar(25)
+  ctoken    String @db.VarChar(255)
+  module    module @relation(fields: [module_id], references: [module], onDelete: Cascade, map: "fkUTModuleID")
+
+  @@index([module_id], map: "fkUTModuleID")
+}
+
+model data_asn {
+  id                  Int      @id @default(autoincrement())
+  nip                 String   @db.VarChar(25)
+  password            String?  @db.Text
+  password_encoded    String   @default("-") @db.VarChar(255)
+  nama_asn            String   @db.VarChar(255)
+  satker_id           String?  @default("-") @db.VarChar(25)
+  jabatan_id          String?  @db.VarChar(25)
+  jabatan_description String?  @default("-") @db.VarChar(255)
+  status_id           String?  @db.VarChar(50)
+  jobvalue_id         Int      @default(0)
+  gol_id              String?  @db.VarChar(25)
+  photo               String?  @db.VarChar(255)
+  photo_exist         Int      @default(2)
+  email               String   @default("-") @db.VarChar(100)
+  gelar_depan         String   @default("-") @db.VarChar(25)
+  gelar_belakang      String   @default("-") @db.VarChar(25)
+  gender_id           String?  @db.VarChar(25)
+  agama_id            String?  @db.VarChar(25)
+  tempat_lahir        String   @default("-") @db.VarChar(255)
+  tanggal_lahir       DateTime @db.Date
+  alamat              String?  @default("-") @db.VarChar(255)
+  nikah_id            String?  @db.VarChar(25)
+  jadwal_id           String?  @default("undefined") @db.VarChar(25)
+  pangkat_id          String   @default("#") @db.VarChar(255)
+  wanumber            String   @default("-") @db.VarChar(25)
+  unique_device       String   @default("#") @db.VarChar(255)
+  merk                String   @default("#") @db.VarChar(255)
+  android_version     String   @default("#") @db.VarChar(255)
+  android_mode        String   @default("#") @db.VarChar(255)
+  is_loggedin         Int      @default(0) @db.SmallInt
+  is_operator         Int      @default(0) @db.SmallInt
+  is_v4               Int      @default(2)
+  last_stamp          DateTime @default(now()) @db.DateTime(0)
+  last_socketid       String   @default("-") @db.VarChar(255)
+  last_token          String   @db.Text
+
+  @@index([satker_id], map: "fkAsnSatkerId")
+  @@index([agama_id], map: "fkPegawaiAgamaID")
+  @@index([status_id], map: "fkPegawaiDataStatusID")
+  @@index([gender_id], map: "fkPegawaiGenderID")
+  @@index([gol_id], map: "fkPegawaiGolID")
+  @@index([jadwal_id], map: "fkPegawaiJadwalID")
+  @@index([nikah_id], map: "fkPegawaiNikahID")
+}
+
+model log_localdata {
+  id           Int           @id @default(autoincrement()) @db.UnsignedInt
+  pegawai_id   Int?
+  localdata    String?       @db.Text
+  stamp        DateTime      @default(now()) @db.DateTime(0)
+  data_pegawai data_pegawai? @relation(fields: [pegawai_id], references: [id], map: "fkLogLocaldataPegawaiID")
+
+  @@index([pegawai_id], map: "fkLogLocaldataPegawaiID")
+}
+
+model log_otp {
+  id           Int           @id @default(autoincrement()) @db.UnsignedInt
+  pegawai_id   Int?
+  wanumber     String        @db.VarChar(25)
+  token        String?       @db.Text
+  otp          String?       @db.VarChar(5)
+  tanggal      DateTime      @db.Date
+  timestamp    DateTime      @default(now()) @db.DateTime(0)
+  data_pegawai data_pegawai? @relation(fields: [pegawai_id], references: [id], map: "fkLogOtpPegawaiID")
+
+  @@index([pegawai_id], map: "fkLogOtpPegawaiID")
+}
+
+model log_webview {
+  id        Int      @id @default(autoincrement()) @db.UnsignedInt
+  route     String   @default("-") @db.VarChar(255)
+  timestamp DateTime @default(now()) @db.DateTime(0)
+}
+
+model sipp_major_v4 {
+  id        Int      @id @default(autoincrement()) @db.UnsignedInt
+  satker_id String   @db.VarChar(25)
+  stamp     DateTime @default(now()) @db.DateTime(0)
+}
+
+model temp_user_inject_pkm {
+  id       Int    @id @default(autoincrement()) @db.UnsignedInt
+  user_id  String @db.VarChar(25)
+  nip_id   String @db.VarChar(25)
+  fullname String @default("-") @db.VarChar(255)
+  is_done  Int    @default(0)
+}
+
+model user_operator_sipp {
+  id         Int    @id @default(autoincrement()) @db.UnsignedInt
+  pegawai_id Int
+  akses_id   String @db.VarChar(25)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model user_indra {
+  id                   Int       @default(0) @db.UnsignedInt
+  username             String    @db.VarChar(25)
+  password_hash        String    @db.VarChar(255)
+  fullname             String    @db.VarChar(255)
+  auth_key             String    @default("-") @db.VarChar(255)
+  password_reset_token String    @default("-") @db.VarChar(255)
+  status               String    @default("10") @db.VarChar(5)
+  email                String    @default("-") @db.VarChar(255)
+  role_id              String    @db.VarChar(25)
+  photo                String    @default("https://satudata.bondowosokab.go.id/v2/dist/assets/media/stock/600x600/user_default.png") @db.VarChar(255)
+  pegawai_id           String?   @db.VarChar(25)
+  created_at           DateTime  @default(now()) @db.DateTime(0)
+  updated_at           DateTime? @default(now()) @db.DateTime(0)
+
+  @@map("_user_indra")
+  @@ignore
+}
+
+model wilayah {
+  id            Int                          @id @unique(map: "id") @default(autoincrement())
+  kode          String                       @db.VarChar(15)
+  kode_bps      String?                      @db.VarChar(15)
+  parent_kode   String                       @db.VarChar(15)
+  nama          String                       @db.VarChar(80)
+  nama_bps      String?                      @db.VarChar(80)
+  kode_pos      String?                      @db.VarChar(20)
+  tipe          String                       @db.VarChar(20)
+  is_model      Int?
+  ancestry_dept Int
+  cluster       String?                      @db.VarChar(20)
+  geo           String?                      @db.VarChar(255)
+  path          String?                      @db.Text
+  color         String?                      @db.VarChar(20)
+  alamat        String?                      @db.VarChar(255)
+  polygon       Unsupported("multipolygon")?
+  created_at    DateTime?                    @db.DateTime(0)
+  updated_at    DateTime?                    @db.DateTime(0)
+  deleted_at    DateTime?                    @db.DateTime(0)
+
+  @@map("_wilayah")
+}
+
+model data_penduduk {
+  id                   Int                   @id @default(autoincrement()) @db.UnsignedInt
+  nik                  String                @unique(map: "unNik") @db.VarChar(25)
+  kk                   String?               @db.VarChar(25)
+  nama                 String                @db.VarChar(100)
+  tmptlahir            String?               @db.VarChar(100)
+  tgllahir             DateTime?             @db.Date
+  status_hidup         String?               @db.VarChar(25)
+  nohp                 String?               @db.VarChar(25)
+  goldarah             String?               @db.VarChar(2)
+  alamat               String?               @db.VarChar(255)
+  alamat_rt            String?               @db.VarChar(25)
+  alamat_rw            String?               @db.VarChar(25)
+  alamat_desakel       String?               @db.VarChar(100)
+  alamat_kecamatan     String?               @db.VarChar(100)
+  pekerjaan            String?               @db.VarChar(100)
+  agama_id             String?               @db.VarChar(25)
+  nikah_id             String?               @db.VarChar(25)
+  bpjs_nokartu         String?               @db.VarChar(25)
+  bpjs_tglaktif        DateTime?             @db.Date
+  bpjs_tglakhir        DateTime?             @db.Date
+  bpjs_status          String?               @db.VarChar(25)
+  bpjs_kdprovider      String?               @db.VarChar(25)
+  bpjs_nmprovider      String?               @db.VarChar(255)
+  bpjs_kdkelas         String?               @db.VarChar(25)
+  bpjs_nmkelas         String?               @db.VarChar(255)
+  master_pegawai_agama master_pegawai_agama? @relation(fields: [agama_id], references: [code], onDelete: Cascade, map: "fkPendudukAgamaID")
+  master_pegawai_nikah master_pegawai_nikah? @relation(fields: [nikah_id], references: [code], onDelete: Cascade, map: "fkPendudukNikahID")
+
+  @@index([agama_id], map: "fkPendudukAgamaID")
+  @@index([nikah_id], map: "fkPendudukNikahID")
+}
+
+model jdih_opsi {
+  id            Int    @id @default(autoincrement()) @db.UnsignedInt
+  pertanyaan_id Int
+  opsi          String @db.VarChar(24)
+}
+
+model jdih_pertanyaan {
+  id         Int    @id @default(autoincrement()) @db.UnsignedInt
+  pertanyaan String @db.VarChar(25)
+}
+
+model user_copy {
+  id                   Int       @id @default(autoincrement()) @db.UnsignedInt
+  username             String    @unique(map: "unUsername") @db.VarChar(25)
+  password_hash        String    @db.VarChar(255)
+  fullname             String    @db.VarChar(255)
+  auth_key             String    @default("-") @db.VarChar(255)
+  password_reset_token String    @default("-") @db.VarChar(255)
+  status               String    @default("10") @db.VarChar(5)
+  email                String    @default("-") @db.VarChar(255)
+  role_id              String    @db.VarChar(25)
+  photo                String    @default("https://satudata.bondowosokab.go.id/v2/dist/assets/media/stock/600x600/user_default.png") @db.VarChar(255)
+  pegawai_id           String?   @db.VarChar(25)
+  created_at           DateTime  @default(now()) @db.DateTime(0)
+  updated_at           DateTime? @default(now()) @db.DateTime(0)
+
+  @@index([pegawai_id], map: "fkUserPegawaiID")
+  @@index([role_id], map: "fkUserRoleIdn")
+}
+
+model buku_tamu_pameran {
+  id                   Int       @id @default(autoincrement())
+  nama_pengunjung      String    @db.VarChar(50)
+  kabupaten_pengunjung String    @db.VarChar(50)
+  provinsi_pengunjung  String    @db.VarChar(50)
+  instansi_pengunjung  String    @db.VarChar(50)
+  foto_pengunjung      String    @db.VarChar(50)
+  tujuan_pengunjung    String    @db.VarChar(100)
+  timestamp            DateTime? @default(now()) @db.DateTime(0)
+}
+
+enum x_data_app_jenis_spbe {
+  KHUSUS
+  UMUM
+
+  @@map("_x_data_app_jenis_spbe")
+}
+
+enum x_data_app_position {
+  SERVER_KOMINFO
+  LUAR_KOMINFO
+
+  @@map("_x_data_app_position")
+}
+
+enum x_data_app_jenis {
+  PELAYANAN_PUBLIK
+  INTERNAL_PEMKAB
+  APLIKASI_PUSAT
+
+  @@map("_x_data_app_jenis")
+}
+
+enum x_data_app_status {
+  Aktif
+  Non_Aktif @map("Non Aktif")
+  Pengembangan
+  Maintenance
+
+  @@map("_x_data_app_status")
+}
+
+enum sinka_regular_masuk_media {
+  MESIN
+  ANDROID
+  WHATSAPP
+}
+
+enum sinka_regular_pulang_media {
+  MESIN
+  ANDROID
+  WHATSAPP
+}
+
+enum sinobo_jadwalkipp_status {
+  TERBUKA
+  TUTUP
+}
+
+enum sipp_dashboard_pp94_jenis {
+  RINGAN
+  SEDANG
+  BERAT
+}
+
+enum sipp_exceptspot_status {
+  ALLOWED
+  REJECT
+}
+
+enum sipp_presensi_type {
+  ANDROID
+  BARCODE
+  FINGERMACHINE
+}
+
+enum sipp_exceptmedium_level {
+  medium
+  high
+  low
+  ultraHigh
+  veryHigh
+  max
+}
